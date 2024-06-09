@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maintenance Calendar</title>
-    <!-- Inclua os estilos do FullCalendar v5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/daygrid/main.min.css' rel='stylesheet' />
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/timegrid/main.min.css' rel='stylesheet' />
@@ -12,50 +12,50 @@
         .fc-time {
             display: none !important;
         }
-        /* Estilos para ocupar toda a tela */
+
         html, body {
             margin: 0;
             padding: 0;
-            height: 100%; /* Ajuste para 100% para ocupar toda a tela */
+            height: 100%; 
         }
-        /* Estilos para o calendário */
+
         #calendar {
-            width: 80%; /* Redimensiona o calendário para 80% da largura da tela */
-            margin: 0 auto; /* Centraliza o calendário na tela */
-            height: calc(100% - 60px); /* Ajusta a altura do calendário */
+            width: 80%; 
+            margin: 0 auto; 
+            height: calc(100% - 60px); 
         }
-        /* Estilos para a janela modal */
+    
         .maintenance-details {
             position: fixed;
             top: 0;
-            right: -50%; /* Inicia fora da tela */
-            width: 50%; /* Largura da seção de detalhes */
+            right: -50%;
+            width: 50%; 
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); /* Fundo semi-transparente */
-            transition: right 0.3s ease; /* Transição suave ao abrir e fechar */
-            z-index: 999; /* Coloca a seção acima do calendário */
+            background-color: rgba(0, 0, 0, 0.5); 
+            transition: right 0.3s ease;
+            z-index: 999;
         }
         .maintenance-details-content {
-            background-color: #fff; /* Fundo branco para o conteúdo */
+            background-color: #fff;
             height: 100%;
-            overflow-y: auto; /* Adiciona barra de rolagem vertical se necessário */
+            overflow-y: auto; 
             padding: 20px;
         }
         .maintenance-details-header {
-            font-weight: bold; /* Título em negrito */
-            font-size: 1.2em; /* Tamanho da fonte aumentado */
-            margin-bottom: 10px; /* Espaçamento inferior */
+            font-weight: bold; 
+            font-size: 1.2em; 
+            margin-bottom: 10px;
         }
         .maintenance-title {
-            background-color: #333; /* Fundo escuro para o título */
-            color: #fff; /* Texto branco */
+            background-color: #333;
+            color: #fff;
             padding: 10px;
             font-weight: bold;
             font-size: 1.2em;
         }
         .maintenance-info {
-            background-color: #666; /* Fundo mais escuro para as informações */
-            color: #fff; /* Texto branco */
+            background-color: #666;
+            color: #fff; 
             padding: 20px;
         }
         .close {
@@ -67,13 +67,13 @@
         }
         #calendarTitle {
             text-align: center;
-            background-color: #076699; /* Fundo escuro para o título */
-            color: #fff; /* Texto branco */
+            background-color: #0a466a; 
+            color: #fff; 
             padding: 10px;
             font-weight: bold;
-            font-size: 1.5em; /* Tamanho da fonte aumentado */
+            font-size: 1.5em; 
         }
-        /* Estilos para o seletor de idioma */
+     
         .language-selector {
             text-align: center;
             margin: 10px 0;
@@ -127,7 +127,6 @@
                     id: 1
                 };
 
-                // Fazer a chamada à API do Zabbix
                 $.ajax({
                     url: "http://127.0.0.1:8080/api_jsonrpc.php",
                     method: "POST",
@@ -150,15 +149,12 @@
 
         function determineEventColor(startDate, endDate) {
             const now = moment();
-            if (now.isBetween(startDate, endDate)) {
-                const timeToEnd = endDate.diff(now, 'minutes');
-                if (timeToEnd <= 20) {
-                    return '#FFA500'; // Laranja
-                } else {
-                    return '#008000'; // Verde
-                }
+            if (now.isBefore(startDate)) {
+                return { color: '#FF0000', status: 'Pendente' }; // Vermelho
+            } else if (now.isBetween(startDate, endDate)) {
+                return { color: '#008000', status: 'Em execução' }; // Verde
             } else {
-                return '#FF0000'; // Vermelho
+                return { color: '#0000FF', status: 'Expirada' }; // Azul
             }
         }
 
@@ -174,7 +170,7 @@
                     var title = `${maintenance.name || 'No name'} (${startDate.format('L')} - ${endDate.format('L')})`;
                     var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
                     var description = maintenance.hosts.length > 0 ? maintenance.hosts.map(host => host.name).join(', ') : '';
-                    var backgroundColor = determineEventColor(startDate, endDate);
+                    var { color, status } = determineEventColor(startDate, endDate);
                     events.push({
                         title: title,
                         start: startDate.toISOString(),
@@ -182,7 +178,8 @@
                         description: description,
                         maintenanceDescription: maintenance.description || '',
                         coletandoDados: coletandoDados,
-                        backgroundColor: backgroundColor
+                        backgroundColor: color,
+                        status: status
                     });
                 });
             });
@@ -227,6 +224,7 @@
                     <p><strong>Hosts in Maintenance:</strong> ${event.extendedProps.description}</p>
                     <p><strong>Description:</strong> ${event.extendedProps.maintenanceDescription}</p>
                     <p><strong>Data Collection:</strong> ${event.extendedProps.coletandoDados}</p>  
+                    <p><strong>Status:</strong> ${event.extendedProps.status}</p>
                 </div>
             `);
             $('.maintenance-details').css('right', '0'); // Exibe a seção de detalhes movendo-a para a direita
@@ -260,4 +258,3 @@
     </script>
 </body>
 </html>
-
