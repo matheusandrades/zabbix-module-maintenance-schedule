@@ -1,0 +1,15 @@
+{
+    "manifest_version": 2.0,
+    "id": "maintenance-calendar",
+    "name": "Calendario de Manutenções",
+    "version": "1.0",
+    "autor": "Matheus da Silva Andrade",
+    "namespace": "MaintenanceCalendar",
+    "description": "View scheduled maintenance in a calendar view",
+    "actions": {
+        "maintenance.calendar": {
+            "class": "MaintenanceCalendar",
+            "view": "maintenance.calendar"
+        }
+    }
+}
