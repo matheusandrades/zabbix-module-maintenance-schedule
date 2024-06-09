@@ -3,7 +3,7 @@
     "id": "maintenance-calendar",
     "name": "Calendario de Manutenções",
     "version": "1.0",
-    "autor": "Matheus da Silva Andrade",
+    "author": "Matheus da Silva Andrade",
     "namespace": "MaintenanceCalendar",
     "description": "View scheduled maintenance in a calendar view",
     "actions": {
