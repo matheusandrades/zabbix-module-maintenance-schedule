@@ -201,7 +201,8 @@
                 "hosts": "Hosts in Maintenance",
                 "description": "Description",
                 "dataCollection": "Data Collection",
-                "status": "Status"
+                "status": "Status",
+                "dateFormat": "MMMM Do YYYY, h:mm:ss a"
             },
             "pt-br": {
                 "statusPending": "Pendente",
@@ -217,7 +218,8 @@
                 "hosts": "Hosts em Manutenção",
                 "description": "Descrição",
                 "dataCollection": "Coleta de Dados",
-                "status": "Status"
+                "status": "Status",
+                "dateFormat": "DD/MM/YYYY, HH:mm:ss"
             }
         };
 
@@ -268,12 +270,13 @@
 
         function determineEventColor(startDate, endDate) {
             const now = moment();
+            const locale = document.getElementById('language-select').value;
             if (now.isBefore(startDate)) {
-                return { color: '#FF0000', status: translations[document.getElementById('language-select').value].statusPending };
+                return { color: '#FF0000', status: translations[locale].statusPending };
             } else if (now.isBetween(startDate, endDate)) {
-                return { color: '#008000', status: translations[document.getElementById('language-select').value].statusRunning };
+                return { color: '#008000', status: translations[locale].statusRunning };
             } else {
-                return { color: '#0000FF', status: translations[document.getElementById('language-select').value].statusExpired };
+                return { color: '#0000FF', status: translations[locale].statusExpired };
             }
         }
 
@@ -350,8 +353,8 @@
 
         function openDetails(event) {
             var locale = document.getElementById('language-select').value;
-            var start = event.start ? moment(event.start).format('MMMM Do YYYY, h:mm:ss a') : '';
-            var end = event.end ? moment(event.end).format('MMMM Do YYYY, h:mm:ss a') : '';
+            var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
+            var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
             $('#infoContent').html(`
                 <div class="maintenance-info">
                     <p class="maintenance-title">${translations[locale].maintenanceTitle}</p>
@@ -380,8 +383,8 @@
             var locale = document.getElementById('language-select').value;
             if (runningMaintenances.length > 0) {
                 var infoContent = runningMaintenances.map(function(event, index) {
-                    var start = moment(event.start).format('MMMM Do YYYY, h:mm:ss a');
-                    var end = moment(event.end).format('MMMM Do YYYY, h:mm:ss a');
+                    var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
+                    var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
                     return `
                         <div class="maintenance-info">
                             <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
