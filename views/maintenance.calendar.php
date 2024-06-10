@@ -57,6 +57,8 @@
             background-color: #666;
             color: #fff;
             padding: 20px;
+            margin-bottom: 10px; /* Adicionando espaçamento entre blocos */
+            border-radius: 5px; /* Adicionando bordas arredondadas para cada bloco */
         }
         .close {
             color: #aaa;
@@ -138,10 +140,10 @@
         .fc-event {
             color: #fff !important;
             padding: 2px 5px;
-	}
-.fc-header-toolbar.fc-toolbar.fc-toolbar-ltr {
-    margin-left: 100px !important;
-}
+        }
+        .fc-header-toolbar.fc-toolbar.fc-toolbar-ltr {
+            margin-left: 100px !important;
+        }
     </style>
 </head>
 <body>
@@ -165,8 +167,7 @@
     <div class="maintenance-details">
         <div class="maintenance-details-content">
             <span class="close" onclick="closeDetails()">&times;</span>
-            <div class="maintenance-title">Event Details</div>
-            <div class="maintenance-info" id="infoContent"></div>
+            <div id="infoContent"></div>
         </div>
     </div>
 
@@ -242,7 +243,7 @@
                 maintenance.timeperiods.forEach(function(period) {
                     var startDate = moment.unix(period.start_date);
                     var endDate = moment.unix(period.start_date).add(period.period, 'seconds');
-                    var title = `${maintenance.name || 'No name'} (${startDate.format('L')} - ${endDate.format('L')})`;
+                    var title = `${maintenance.name || 'No name'} (${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')})`;
                     var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
                     var description = maintenance.hosts.length > 0 ? maintenance.hosts.map(host => host.name).join(', ') : '';
                     var { color, status } = determineEventColor(startDate, endDate);
@@ -332,11 +333,12 @@
 
         function showRunningMaintenances() {
             if (runningMaintenances.length > 0) {
-                var infoContent = runningMaintenances.map(function(event) {
+                var infoContent = runningMaintenances.map(function(event, index) {
                     var start = moment(event.start).format('MMMM Do YYYY, h:mm:ss a');
                     var end = moment(event.end).format('MMMM Do YYYY, h:mm:ss a');
                     return `
                         <div class="maintenance-info">
+                            <p class="maintenance-title">Manutenção em Andamento ${index + 1}</p>
                             <p><strong>Title:</strong> ${event.title}</p>
                             <p><strong>Start:</strong> ${start}</p>
                             <p><strong>End:</strong> ${end}</p>
