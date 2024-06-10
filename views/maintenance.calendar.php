@@ -29,21 +29,21 @@
             position: fixed;
             top: 0;
             right: -50%;
-            width: 50%; 
+            width: 50%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5); 
+            background-color: rgba(0, 0, 0, 0.5);
             transition: right 0.3s ease;
             z-index: 999;
         }
         .maintenance-details-content {
             background-color: #fff;
             height: 100%;
-            overflow-y: auto; 
+            overflow-y: auto;
             padding: 20px;
         }
         .maintenance-details-header {
-            font-weight: bold; 
-            font-size: 1.2em; 
+            font-weight: bold;
+            font-size: 1.2em;
             margin-bottom: 10px;
         }
         .maintenance-title {
@@ -55,7 +55,7 @@
         }
         .maintenance-info {
             background-color: #666;
-            color: #fff; 
+            color: #fff;
             padding: 20px;
         }
         .close {
@@ -67,13 +67,12 @@
         }
         #calendarTitle {
             text-align: center;
-            background-color: #0a466a; 
-            color: #fff; 
+            background-color: #0a466a;
+            color: #fff;
             padding: 10px;
             font-weight: bold;
-            font-size: 1.5em; 
+            font-size: 1.5em;
         }
-     
         .language-selector {
             text-align: center;
             margin: 10px 0;
@@ -81,6 +80,34 @@
         .language-selector select {
             padding: 5px;
             font-size: 1em;
+        }
+        /* Estilo para o popup */
+        .popup {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ff0000;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .popup.show {
+            display: block;
+        }
+        .popup .close-popup {
+            float: right;
+            color: #fff;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .popup.blinking {
+            animation: blinker 5s linear infinite;
+        }
+        @keyframes blinker {  
+            50% { opacity: 0; }
         }
     </style>
 </head>
@@ -101,6 +128,11 @@
             <div class="maintenance-title">Event Details</div>
             <div class="maintenance-info" id="infoContent"></div>
         </div>
+    </div>
+
+    <div class="popup" id="maintenancePopup">
+        <span id="popupMessage">Há uma manutenção em andamento!</span>
+        <span class="close-popup" onclick="closePopup()">&times;</span>
     </div>
 
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -162,6 +194,7 @@
 
         function initializeCalendar(maintenanceData, locale) {
             var events = [];
+            var ongoingMaintenanceCount = 0;
 
             maintenanceData.forEach(function(maintenance) {
                 maintenance.timeperiods.forEach(function(period) {
@@ -181,8 +214,19 @@
                         backgroundColor: color,
                         status: status
                     });
+
+                    if (status === 'Em execução') {
+                        ongoingMaintenanceCount++;
+                    }
                 });
             });
+
+            if (ongoingMaintenanceCount > 0) {
+                var popupMessage = `Há ${ongoingMaintenanceCount} manutenção(ões) em andamento!`;
+                var popupElement = document.getElementById('maintenancePopup');
+                document.getElementById('popupMessage').innerText = popupMessage;
+                popupElement.classList.add('show', 'blinking');
+            }
 
             var calendarEl = document.getElementById('calendar');
             if (calendar) {
@@ -227,11 +271,16 @@
                     <p><strong>Status:</strong> ${event.extendedProps.status}</p>
                 </div>
             `);
-            $('.maintenance-details').css('right', '0'); // Exibe a seção de detalhes movendo-a para a direita
+            $('.maintenance-details').css('right', '0'); 
         }
 
         function closeDetails() {
-            $('.maintenance-details').css('right', '-50%'); // Oculta a seção de detalhes movendo-a para fora da tela
+            $('.maintenance-details').css('right', '-50%'); 
+        }
+
+        function closePopup() {
+            var popupElement = document.getElementById('maintenancePopup');
+            popupElement.classList.remove('show', 'blinking');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
