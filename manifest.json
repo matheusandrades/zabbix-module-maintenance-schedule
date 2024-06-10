@@ -5,6 +5,7 @@
     "version": "1.0",
     "author": "Matheus da Silva Andrade",
     "namespace": "MaintenanceCalendar",
+    "url": "https://www.linkedin.com/in/matheus-da-silva-andrade/",
     "description": "View scheduled maintenance in a calendar view",
     "actions": {
         "maintenance.calendar": {
