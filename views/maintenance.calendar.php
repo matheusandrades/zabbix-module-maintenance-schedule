@@ -66,20 +66,45 @@
             cursor: pointer;
         }
         #calendarTitle {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             background-color: #0a466a;
             color: #fff;
             padding: 10px;
             font-weight: bold;
             font-size: 1.5em;
         }
-        .language-selector {
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .status-indicator div {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-indicator .pending {
+            background-color: #FF0000; /* Vermelho */
+        }
+        .status-indicator .running {
+            background-color: #008000; /* Verde */
+        }
+        .status-indicator .expired {
+            background-color: #0000FF; /* Azul */
+        }
+        .title {
+            flex-grow: 1;
             text-align: center;
-            margin: 10px 0;
+        }
+        .language-selector {
+            margin-left: 20px;
+            font-size: 0.8em; /* Reduzindo o tamanho da fonte */
         }
         .language-selector select {
             padding: 5px;
-            font-size: 1em;
+            font-size: 10px;
         }
         /* Estilo para o popup */
         .popup {
@@ -87,12 +112,13 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: #ff0000;
+            background-color: #2c8100;
             color: #fff;
             padding: 15px;
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
+            cursor: pointer; /* Adicionando cursor pointer */
         }
         .popup.show {
             display: block;
@@ -112,13 +138,20 @@
     </style>
 </head>
 <body>
-    <div id="calendarTitle">Maintenance Calendar</div>
-    <div class="language-selector">
-        <label for="language-select">Select Language:</label>
-        <select id="language-select">
-            <option value="en">English</option>
-            <option value="pt-br">Português</option>
-        </select>
+    <div id="calendarTitle">
+        <div class="status-indicator">
+            <div class="pending"></div> Pendente
+            <div class="running"></div> Em execução
+            <div class="expired"></div> Expirada
+        </div>
+        <div class="title">Maintenance Calendar</div>
+        <div class="language-selector">
+            <label for="language-select">Select Language:</label>
+            <select id="language-select">
+                <option value="en">English</option>
+                <option value="pt-br">Português</option>
+            </select>
+        </div>
     </div>
     <div id="calendar"></div>
 
@@ -130,7 +163,7 @@
         </div>
     </div>
 
-    <div class="popup" id="maintenancePopup">
+    <div class="popup" id="maintenancePopup" onclick="showRunningMaintenances()">
         <span id="popupMessage">Há uma manutenção em andamento!</span>
         <span class="close-popup" onclick="closePopup()">&times;</span>
     </div>
@@ -143,6 +176,9 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script>
+        var calendar;
+        var runningMaintenances = [];
+
         function fetchMaintenanceData() {
             return new Promise(function(resolve, reject) {
                 var requestData = {
@@ -190,11 +226,10 @@
             }
         }
 
-        var calendar;
-
         function initializeCalendar(maintenanceData, locale) {
             var events = [];
             var ongoingMaintenanceCount = 0;
+            runningMaintenances = [];
 
             maintenanceData.forEach(function(maintenance) {
                 maintenance.timeperiods.forEach(function(period) {
@@ -204,7 +239,7 @@
                     var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
                     var description = maintenance.hosts.length > 0 ? maintenance.hosts.map(host => host.name).join(', ') : '';
                     var { color, status } = determineEventColor(startDate, endDate);
-                    events.push({
+                    var event = {
                         title: title,
                         start: startDate.toISOString(),
                         end: endDate.toISOString(),
@@ -213,9 +248,11 @@
                         coletandoDados: coletandoDados,
                         backgroundColor: color,
                         status: status
-                    });
+                    };
+                    events.push(event);
 
                     if (status === 'Em execução') {
+                        runningMaintenances.push(event);
                         ongoingMaintenanceCount++;
                     }
                 });
@@ -283,6 +320,28 @@
             popupElement.classList.remove('show', 'blinking');
         }
 
+        function showRunningMaintenances() {
+            if (runningMaintenances.length > 0) {
+                var infoContent = runningMaintenances.map(function(event) {
+                    var start = moment(event.start).format('MMMM Do YYYY, h:mm:ss a');
+                    var end = moment(event.end).format('MMMM Do YYYY, h:mm:ss a');
+                    return `
+                        <div class="maintenance-info">
+                            <p><strong>Title:</strong> ${event.title}</p>
+                            <p><strong>Start:</strong> ${start}</p>
+                            <p><strong>End:</strong> ${end}</p>
+                            <p><strong>Hosts in Maintenance:</strong> ${event.description}</p>
+                            <p><strong>Description:</strong> ${event.maintenanceDescription}</p>
+                            <p><strong>Data Collection:</strong> ${event.coletandoDados}</p>  
+                            <p><strong>Status:</strong> ${event.status}</p>
+                        </div>
+                    `;
+                }).join('');
+                $('#infoContent').html(infoContent);
+                $('.maintenance-details').css('right', '0');
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             fetchMaintenanceData()
                 .then(function(maintenanceData) {
@@ -307,3 +366,4 @@
     </script>
 </body>
 </html>
+
