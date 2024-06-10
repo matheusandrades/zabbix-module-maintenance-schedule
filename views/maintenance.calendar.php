@@ -57,8 +57,8 @@
             background-color: #666;
             color: #fff;
             padding: 20px;
-            margin-bottom: 10px; /* Adicionando espaçamento entre blocos */
-            border-radius: 5px; /* Adicionando bordas arredondadas para cada bloco */
+            margin-bottom: 10px;
+            border-radius: 5px;
         }
         .close {
             color: #aaa;
@@ -102,7 +102,7 @@
         }
         .language-selector {
             margin-left: 20px;
-            font-size: 0.8em; /* Reduzindo o tamanho da fonte */
+            font-size: 0.8em;
         }
         .language-selector select {
             padding: 5px;
@@ -120,7 +120,7 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            cursor: pointer; /* Adicionando cursor pointer */
+            cursor: pointer;
         }
         .popup.show {
             display: block;
@@ -149,13 +149,13 @@
 <body>
     <div id="calendarTitle">
         <div class="status-indicator">
-            <div class="pending"></div> Pendente
-            <div class="running"></div> Em execução
-            <div class="expired"></div> Expirada
+            <div class="pending"></div> <span id="statusPending">Pendente</span>
+            <div class="running"></div> <span id="statusRunning">Em execução</span>
+            <div class="expired"></div> <span id="statusExpired">Expirada</span>
         </div>
-        <div class="title">Maintenance Calendar</div>
+        <div class="title" id="mainTitle">Maintenance Calendar</div>
         <div class="language-selector">
-            <label for="language-select">Select Language:</label>
+            <label for="language-select" id="languageLabel">Select Language:</label>
             <select id="language-select">
                 <option value="en">English</option>
                 <option value="pt-br">Português</option>
@@ -186,6 +186,49 @@
     <script>
         var calendar;
         var runningMaintenances = [];
+        var translations = {
+            "en": {
+                "statusPending": "Pending",
+                "statusRunning": "Running",
+                "statusExpired": "Expired",
+                "mainTitle": "Maintenance Calendar",
+                "languageLabel": "Select Language:",
+                "popupMessage": "There is ongoing maintenance!",
+                "maintenanceTitle": "Maintenance in Progress",
+                "title": "Title",
+                "start": "Start",
+                "end": "End",
+                "hosts": "Hosts in Maintenance",
+                "description": "Description",
+                "dataCollection": "Data Collection",
+                "status": "Status"
+            },
+            "pt-br": {
+                "statusPending": "Pendente",
+                "statusRunning": "Em execução",
+                "statusExpired": "Expirada",
+                "mainTitle": "Calendário de Manutenção",
+                "languageLabel": "Selecionar idioma:",
+                "popupMessage": "Há uma manutenção em andamento!",
+                "maintenanceTitle": "Manutenção em Andamento",
+                "title": "Título",
+                "start": "Início",
+                "end": "Fim",
+                "hosts": "Hosts em Manutenção",
+                "description": "Descrição",
+                "dataCollection": "Coleta de Dados",
+                "status": "Status"
+            }
+        };
+
+        function applyTranslations(locale) {
+            document.getElementById('statusPending').innerText = translations[locale].statusPending;
+            document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
+            document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
+            document.getElementById('mainTitle').innerText = translations[locale].mainTitle;
+            document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
+            document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
+        }
 
         function fetchMaintenanceData() {
             return new Promise(function(resolve, reject) {
@@ -226,11 +269,11 @@
         function determineEventColor(startDate, endDate) {
             const now = moment();
             if (now.isBefore(startDate)) {
-                return { color: '#FF0000', status: 'Pendente' }; // Vermelho
+                return { color: '#FF0000', status: translations[document.getElementById('language-select').value].statusPending };
             } else if (now.isBetween(startDate, endDate)) {
-                return { color: '#008000', status: 'Em execução' }; // Verde
+                return { color: '#008000', status: translations[document.getElementById('language-select').value].statusRunning };
             } else {
-                return { color: '#0000FF', status: 'Expirada' }; // Azul
+                return { color: '#0000FF', status: translations[document.getElementById('language-select').value].statusExpired };
             }
         }
 
@@ -260,7 +303,7 @@
                     };
                     events.push(event);
 
-                    if (status === 'Em execução') {
+                    if (status === translations[locale].statusRunning) {
                         runningMaintenances.push(event);
                         ongoingMaintenanceCount++;
                     }
@@ -268,7 +311,7 @@
             });
 
             if (ongoingMaintenanceCount > 0) {
-                var popupMessage = `Há ${ongoingMaintenanceCount} manutenção(ões) em andamento!`;
+                var popupMessage = `${translations[locale].popupMessage} (${ongoingMaintenanceCount})`;
                 var popupElement = document.getElementById('maintenancePopup');
                 document.getElementById('popupMessage').innerText = popupMessage;
                 popupElement.classList.add('show', 'blinking');
@@ -306,17 +349,19 @@
         }
 
         function openDetails(event) {
+            var locale = document.getElementById('language-select').value;
             var start = event.start ? moment(event.start).format('MMMM Do YYYY, h:mm:ss a') : '';
             var end = event.end ? moment(event.end).format('MMMM Do YYYY, h:mm:ss a') : '';
             $('#infoContent').html(`
                 <div class="maintenance-info">
-                    <p><strong>Title:</strong> ${event.title}</p>
-                    <p><strong>Start:</strong> ${start}</p>
-                    <p><strong>End:</strong> ${end}</p>
-                    <p><strong>Hosts in Maintenance:</strong> ${event.extendedProps.description}</p>
-                    <p><strong>Description:</strong> ${event.extendedProps.maintenanceDescription}</p>
-                    <p><strong>Data Collection:</strong> ${event.extendedProps.coletandoDados}</p>  
-                    <p><strong>Status:</strong> ${event.extendedProps.status}</p>
+                    <p class="maintenance-title">${translations[locale].maintenanceTitle}</p>
+                    <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                    <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                    <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                    <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.description}</p>
+                    <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
+                    <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
+                    <p><strong>${translations[locale].status}:</strong> ${event.extendedProps.status}</p>
                 </div>
             `);
             $('.maintenance-details').css('right', '0'); 
@@ -332,20 +377,21 @@
         }
 
         function showRunningMaintenances() {
+            var locale = document.getElementById('language-select').value;
             if (runningMaintenances.length > 0) {
                 var infoContent = runningMaintenances.map(function(event, index) {
                     var start = moment(event.start).format('MMMM Do YYYY, h:mm:ss a');
                     var end = moment(event.end).format('MMMM Do YYYY, h:mm:ss a');
                     return `
                         <div class="maintenance-info">
-                            <p class="maintenance-title">Manutenção em Andamento ${index + 1}</p>
-                            <p><strong>Title:</strong> ${event.title}</p>
-                            <p><strong>Start:</strong> ${start}</p>
-                            <p><strong>End:</strong> ${end}</p>
-                            <p><strong>Hosts in Maintenance:</strong> ${event.description}</p>
-                            <p><strong>Description:</strong> ${event.maintenanceDescription}</p>
-                            <p><strong>Data Collection:</strong> ${event.coletandoDados}</p>  
-                            <p><strong>Status:</strong> ${event.status}</p>
+                            <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
+                            <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                            <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                            <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                            <p><strong>${translations[locale].hosts}:</strong> ${event.description}</p>
+                            <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
+                            <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>  
+                            <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
                         </div>
                     `;
                 }).join('');
@@ -355,27 +401,29 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            fetchMaintenanceData()
-                .then(function(maintenanceData) {
-                    var locale = document.getElementById('language-select').value;
-                    initializeCalendar(maintenanceData, locale);
-                })
-                .catch(function(error) {
-                    console.error("Error fetching scheduled maintenance: " + error);
-                });
-
-            document.getElementById('language-select').addEventListener('change', function() {
+            var languageSelect = document.getElementById('language-select');
+            languageSelect.addEventListener('change', function() {
+                var locale = languageSelect.value;
+                applyTranslations(locale);
                 fetchMaintenanceData()
                     .then(function(maintenanceData) {
-                        var locale = document.getElementById('language-select').value;
                         initializeCalendar(maintenanceData, locale);
                     })
                     .catch(function(error) {
                         console.error("Error fetching scheduled maintenance: " + error);
                     });
             });
+
+            fetchMaintenanceData()
+                .then(function(maintenanceData) {
+                    var locale = languageSelect.value;
+                    applyTranslations(locale);
+                    initializeCalendar(maintenanceData, locale);
+                })
+                .catch(function(error) {
+                    console.error("Error fetching scheduled maintenance: " + error);
+                });
         });
     </script>
 </body>
 </html>
-
