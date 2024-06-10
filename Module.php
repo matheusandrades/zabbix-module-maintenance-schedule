@@ -1,9 +1,9 @@
 <?php
-namespace Modules\MaintenanceCalendar;
+namespace Modules\Calendario;
 
-use Zabbix\Core\CModule,
-    APP,
-    CMenuItem;
+use Zabbix\Core\CModule;
+use APP;
+use CMenuItem;
 
 class Module extends CModule {
     public function init(): void {
@@ -11,7 +11,7 @@ class Module extends CModule {
             ->findOrAdd(_('Reports'))
                 ->getSubmenu()
                     ->insertAfter(_('Notification'),
-                        (new CMenuItem(_('Calendario de Manutenções')))->setAction('maintenance.calendar')
+                        (new CMenuItem(_('Calendário de Manutenções')))->setAction('maintenance.calendar')
                     );
     }
 }
