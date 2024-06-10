@@ -135,6 +135,13 @@
         @keyframes blinker {  
             50% { opacity: 0; }
         }
+        .fc-event {
+            color: #fff !important;
+            padding: 2px 5px;
+	}
+.fc-header-toolbar.fc-toolbar.fc-toolbar-ltr {
+    margin-left: 100px !important;
+}
     </style>
 </head>
 <body>
@@ -247,6 +254,7 @@
                         maintenanceDescription: maintenance.description || '',
                         coletandoDados: coletandoDados,
                         backgroundColor: color,
+                        borderColor: color,
                         status: status
                     };
                     events.push(event);
@@ -285,6 +293,8 @@
                     if (info.el.querySelector('.fc-list-event-title')) {
                         info.el.querySelector('.fc-list-event-title').style.backgroundColor = info.event.backgroundColor;
                     }
+                    info.el.style.backgroundColor = info.event.backgroundColor;
+                    info.el.style.borderColor = info.event.borderColor;
                 },
                 dayMaxEvents: true, 
                 height: '100%', 
