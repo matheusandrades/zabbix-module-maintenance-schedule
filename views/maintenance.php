@@ -5,6 +5,9 @@
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/daygrid/main.min.css' rel='stylesheet' />
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/timegrid/main.min.css' rel='stylesheet' />
 
+<!-- Incluindo Chart.js via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
     .fc-time {
         display: none !important;
@@ -125,7 +128,7 @@
         font-size: 12px;
         background-color: #fff;
         color: #0a466a;
-        padding: 10;
+        padding: 10px;
         border: 1px solid #0a466a;
         border-radius: 3px;
         cursor: pointer;
@@ -185,6 +188,71 @@
     #statusIndicators .status-indicator {
         margin: 0 20px;
     }
+
+    /* Adicionando estilo para o botão de relatório */
+    .report-button {
+        margin-right: 20px;
+        font-size: 12px;
+        background-color: #fff;
+        color: #0a466a;
+        padding: 5;
+        border: 1px solid #0a466a;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    /* Estilo para a janela modal de relatório */
+.report-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border: 1px solid #0a466a;
+    border-radius: 5px;
+    padding: 20px;
+    z-index: 1001;
+    width: 80%;
+    height: 80%;
+    overflow: auto;
+}
+
+.report-modal .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+
+.report-modal h2 {
+    margin-bottom: 10px; /* Reduzir o espaçamento abaixo do título */
+}
+
+.report-modal .charts-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    height: 100%;
+}
+
+.report-modal canvas {
+    width: 50 !important;
+    height: 400px !important;
+    margin-bottom: 0; /* Remover o espaçamento abaixo dos gráficos */
+}
+
+#statusChartLegend, #hostChartLegend {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 10px; /* Reduzir o espaçamento acima das legendas */
+}
+
+
 </style>
 
 <div id="calendarTitle">
@@ -195,6 +263,7 @@
             <option value="en">English</option>
         </select>
     </div>
+    <button class="report-button" onclick="showReport()">Relatório</button>
 </div>
 <div id="calendar"></div>
 
@@ -222,6 +291,22 @@
     <span class="close-popup" onclick="closePopup()">&times;</span>
 </div>
 
+<!-- Modal para o relatório -->
+<div class="report-modal" id="reportModal">
+    <span class="close" onclick="closeReport()">&times;</span>
+    <h2 id="reportTitle">Relatório de Manutenções</h2>
+    <div class="charts-container">
+        <div>
+            <canvas id="statusChart"></canvas>
+            <div id="statusChartLegend"></div>
+        </div>
+        <div>
+            <canvas id="hostChart"></canvas>
+            <div id="hostChartLegend"></div>
+        </div>
+    </div>
+</div>
+
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/daygrid/main.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/timegrid/main.min.js'></script>
@@ -229,7 +314,7 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/moment/main.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales-all.min.js'></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script>
     var calendar;
     var runningMaintenances = [];
@@ -249,6 +334,9 @@
             "description": "Description",
             "dataCollection": "Data Collection",
             "status": "Status",
+            "reportTitle": "Maintenance Report",
+            "statusChartTitle": "Maintenance by Status",
+            "hostChartTitle": "Maintenance by Hosts",
             "dateFormat": "MMMM Do YYYY, h:mm:ss a"
         },
         "pt-br": {
@@ -266,6 +354,9 @@
             "description": "Descrição",
             "dataCollection": "Coleta de Dados",
             "status": "Status",
+            "reportTitle": "Relatório de Manutenções",
+            "statusChartTitle": "Manutenções por Status",
+            "hostChartTitle": "Manutenções por Hosts",
             "dateFormat": "DD/MM/YYYY, HH:mm:ss"
         }
     };
@@ -276,6 +367,7 @@
         document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
         document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
         document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
+        document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
     }
 
     function determineEventColor(startDate, endDate) {
@@ -310,7 +402,7 @@
                 description: description,
                 maintenanceDescription: maintenance.description || '',
                 coletandoDados: coletandoDados,
-                hosts: hosts,
+                hosts: Array.isArray(hosts) ? hosts : hosts.split(','),
                 backgroundColor: color,
                 borderColor: color,
                 status: status
@@ -343,6 +435,9 @@
                 right: 'dayGridMonth,timeGridWeek,timeGridDay'
             },
             events: events,
+            datesSet: function(info) {
+                updateCharts(info.start, info.end);
+            },
             eventClick: function(info) {
                 openDetails(info.event); 
             },
@@ -371,7 +466,7 @@
                 <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
                 <p><strong>${translations[locale].start}:</strong> ${start}</p>
                 <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts}</p>
+                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
                 <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
                 <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
                 <p><strong>${translations[locale].status}:</strong> ${event.extendedProps.status}</p>
@@ -401,7 +496,7 @@
                         <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
                         <p><strong>${translations[locale].start}:</strong> ${start}</p>
                         <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                        <p><strong>${translations[locale].hosts}:</strong> ${event.hosts}</p>
+                        <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
                         <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
                         <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>  
                         <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
@@ -411,32 +506,6 @@
             $('#infoContent').html(infoContent);
             $('.maintenance-details').css('right', '0');
         }
-    }
-
-    function exportCSV() {
-        var locale = document.getElementById('language-select').value;
-        var maintenanceData = <?php echo json_encode($data['maintenances']); ?>;
-        var csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += `${translations[locale].title},${translations[locale].start},${translations[locale].end},${translations[locale].hosts},${translations[locale].description},${translations[locale].dataCollection},${translations[locale].status}\n`;
-
-        maintenanceData.forEach(function(maintenance) {
-            var startDate = moment.unix(maintenance.start_date);
-            var endDate = startDate.clone().add(maintenance.period, 'seconds');
-            var title = `${maintenance.name || 'No name'} (${startDate.format(translations[locale].dateFormat)} - ${endDate.format(translations[locale].dateFormat)})`;
-            var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
-            var description = maintenance.description || '';
-            var hosts = maintenance.hosts || '';
-            var { status } = determineEventColor(startDate, endDate);
-            csvContent += `${title},${startDate.format(translations[locale].dateFormat)},${endDate.format(translations[locale].dateFormat)},${hosts},${description},${coletandoDados},${status}\n`;
-        });
-
-        var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "maintenance_schedule.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -465,5 +534,202 @@
         return new Promise(function(resolve, reject) {
             resolve(<?php echo json_encode($data['maintenances']); ?>);
         });
+    }
+
+    function showReport() {
+        document.getElementById('reportModal').style.display = 'block';
+        renderCharts();
+    }
+
+    function closeReport() {
+        document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function generateLegend(chart, legendId) {
+        const legendContainer = document.getElementById(legendId);
+        let legendHTML = '<table style="margin: 0 auto;">';
+        chart.data.labels.forEach((label, index) => {
+            const value = chart.data.datasets[0].data[index];
+            const bgColor = chart.data.datasets[0].backgroundColor[index];
+            legendHTML += `<tr><td style="background-color:${bgColor}; width:20px;">&nbsp;</td><td style="padding-left: 5px;">${label}: ${value}</td></tr>`;
+        });
+        legendHTML += '</table>';
+        legendContainer.innerHTML = legendHTML;
+    }
+
+var statusChart;
+var hostChart;
+
+function renderCharts(startDate = null, endDate = null) {
+    var maintenances = <?php echo json_encode($data['maintenances']); ?>;
+    
+    var statusCounts = { pending: 0, running: 0, expired: 0 };
+    var hostCounts = {};
+
+    maintenances.forEach(function(maintenance) {
+        var start = moment.unix(maintenance.start_date);
+        var end = start.clone().add(maintenance.period, 'seconds');
+        
+        if (startDate && endDate && (start.isBefore(startDate) || end.isAfter(endDate))) {
+            return;
+        }
+
+        var status = determineEventColor(start, end).statusKey; // Use statusKey instead of status
+
+        if (status === 'pending') {
+            statusCounts.pending++;
+        } else if (status === 'running') {
+            statusCounts.running++;
+        } else if (status === 'expired') {
+            statusCounts.expired++;
+        }
+
+        var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : maintenance.hosts.split(',');
+        hosts.forEach(function(host) {
+            if (hostCounts[host]) {
+                hostCounts[host]++;
+            } else {
+                hostCounts[host] = 1;
+            }
+        });
+    });
+
+    var statusCtx = document.getElementById('statusChart').getContext('2d');
+    var hostCtx = document.getElementById('hostChart').getContext('2d');
+
+    // Destroi os gráficos existentes antes de recriá-los
+    if (statusChart) {
+        statusChart.destroy();
+    }
+    if (hostChart) {
+        hostChart.destroy();
+    }
+
+    var locale = document.getElementById('language-select').value;
+
+    statusChart = new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: [
+                translations[locale].statusPending, 
+                translations[locale].statusRunning, 
+                translations[locale].statusExpired
+            ],
+            datasets: [{
+                data: [statusCounts.pending, statusCounts.running, statusCounts.expired],
+                backgroundColor: ['#FF0000', '#008000', '#0000FF']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: translations[locale].statusChartTitle,
+                    font: {
+                        size: 16
+                    },
+                    padding: {
+                        bottom: 10 // Reduzir o espaçamento abaixo do título
+                    }
+                },
+                legend: {
+                    display: false // Desativar a legenda padrão
+                }
+            },
+            layout: {
+                padding: {
+                    top: 10, // Reduzir o espaçamento acima do gráfico
+                    bottom: 10 // Reduzir o espaçamento abaixo do gráfico
+                }
+            },
+            onComplete: function() {
+                generateLegend(this, 'statusChartLegend');
+            }
+        },
+        plugins: [ // Adicionar o plugin de legendas personalizadas
+            {
+                id: 'customLegend',
+                afterDraw: function(chart) {
+                    generateLegend(chart, 'statusChartLegend');
+                }
+            }
+        ]
+    });
+
+    hostChart = new Chart(hostCtx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(hostCounts),
+            datasets: [{
+                data: Object.values(hostCounts),
+                backgroundColor: Object.keys(hostCounts).map(() => '#' + Math.floor(Math.random()*16777215).toString(16))
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: translations[locale].hostChartTitle,
+                    font: {
+                        size: 16
+                    },
+                    padding: {
+                        bottom: 10 // Reduzir o espaçamento abaixo do título
+                    }
+                },
+                legend: {
+                    display: false // Desativar a legenda padrão
+                }
+            },
+            layout: {
+                padding: {
+                    top: 10, // Reduzir o espaçamento acima do gráfico
+                    bottom: 10 // Reduzir o espaçamento abaixo do gráfico
+                }
+            },
+            onComplete: function() {
+                generateLegend(this, 'hostChartLegend');
+            }
+        },
+        plugins: [ // Adicionar o plugin de legendas personalizadas
+            {
+                id: 'customLegend',
+                afterDraw: function(chart) {
+                    generateLegend(chart, 'hostChartLegend');
+                }
+            }
+        ]
+    });
+}
+
+function determineEventColor(startDate, endDate) {
+    const now = moment();
+    const locale = document.getElementById('language-select').value;
+    if (now.isBefore(startDate)) {
+        return { color: '#FF0000', statusKey: 'pending', status: translations[locale].statusPending };
+    } else if (now.isBetween(startDate, endDate)) {
+        return { color: '#008000', statusKey: 'running', status: translations[locale].statusRunning };
+    } else {
+        return { color: '#0000FF', statusKey: 'expired', status: translations[locale].statusExpired };
+    }
+}
+
+
+
+    function updateCharts(startDate, endDate) {
+        renderCharts(startDate, endDate);
+    }
+
+    function showReport() {
+        document.getElementById('reportModal').style.display = 'block';
+        renderCharts();
+    }
+
+    function closeReport() {
+        document.getElementById('reportModal').style.display = 'none';
     }
 </script>
