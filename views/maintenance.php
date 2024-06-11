@@ -1,12 +1,4 @@
-<?php declare(strict_types = 0);
-
-/*
-** Copyright (C) 2001-2024 Zabbix SIA
-** This program is free software: you can redistribute it and/or modify it under the terms of
-** the GNU Affero General Public License as published by the Free Software Foundation, version 3.
-*/
-
-?>
+<?php declare(strict_types = 0); ?>
 
 <!-- Incluindo FullCalendar via CDN -->
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
@@ -277,11 +269,12 @@
         runningMaintenances = [];
 
         maintenanceData.forEach(function(maintenance) {
-            var startDate = moment(maintenance.start);
-            var endDate = moment(maintenance.end);
-            var title = `${maintenance.name || 'No name'} (${startDate.format('DD/MM/YYYY')} - ${endDate.format('DD/MM/YYYY')})`;
+            var startDate = moment.unix(maintenance.start_date);
+            var endDate = startDate.clone().add(maintenance.period, 'seconds');
+            var title = `${maintenance.name || 'No name'} (${startDate.format(translations[locale].dateFormat)} - ${endDate.format(translations[locale].dateFormat)})`;
             var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
             var description = maintenance.description || '';
+            var hosts = maintenance.hosts || '';
             var { color, status } = determineEventColor(startDate, endDate);
             var event = {
                 title: title,
@@ -290,6 +283,7 @@
                 description: description,
                 maintenanceDescription: maintenance.description || '',
                 coletandoDados: coletandoDados,
+                hosts: hosts,
                 backgroundColor: color,
                 borderColor: color,
                 status: status
@@ -350,7 +344,7 @@
                 <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
                 <p><strong>${translations[locale].start}:</strong> ${start}</p>
                 <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.description}</p>
+                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts}</p>
                 <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
                 <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
                 <p><strong>${translations[locale].status}:</strong> ${event.extendedProps.status}</p>
@@ -380,7 +374,7 @@
                         <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
                         <p><strong>${translations[locale].start}:</strong> ${start}</p>
                         <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                        <p><strong>${translations[locale].hosts}:</strong> ${event.description}</p>
+                        <p><strong>${translations[locale].hosts}:</strong> ${event.hosts}</p>
                         <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
                         <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>  
                         <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
@@ -399,6 +393,7 @@
             applyTranslations(locale);
             fetchMaintenanceData()
                 .then(function(maintenanceData) {
+                    var locale = languageSelect.value;
                     initializeCalendar(maintenanceData, locale);
                 })
                 .catch(function(error) {
@@ -411,5 +406,11 @@
         applyTranslations(locale);
         initializeCalendar(maintenances, locale);
     });
-</script>
 
+    function fetchMaintenanceData() {
+        // Função simulada para buscar dados de manutenção
+        return new Promise(function(resolve, reject) {
+            resolve(<?php echo json_encode($data['maintenances']); ?>);
+        });
+    }
+</script>
