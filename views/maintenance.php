@@ -19,7 +19,7 @@
     #calendar {
         width: 80%;
         margin: 0 auto;
-        height: calc(100% - 60px);
+        height: calc(100% - 100px);
     }
 
     .maintenance-details {
@@ -120,6 +120,17 @@
         font-size: 10px;
     }
 
+    .export-button {
+        margin-left: 20px;
+        font-size: 12px;
+        background-color: #fff;
+        color: #0a466a;
+        padding: 10;
+        border: 1px solid #0a466a;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
     .popup {
         display: none;
         position: fixed;
@@ -163,15 +174,20 @@
     .fc-header-toolbar.fc-toolbar.fc-toolbar-ltr {
         margin-left: 100px !important;
     }
+
+    #statusIndicators {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+    }
+
+    #statusIndicators .status-indicator {
+        margin: 0 20px;
+    }
 </style>
 
 <div id="calendarTitle">
-    <div class="status-indicator">
-        <div class="pending"></div> <span id="statusPending">Pendente</span>
-        <div class="running"></div> <span id="statusRunning">Em execução</span>
-        <div class="expired"></div> <span id="statusExpired">Expirada</span>
-    </div>
-    <div class="title" id="mainTitle">Maintenance Calendar</div>
     <div class="language-selector">
         <label for="language-select" id="languageLabel">Select Language:</label>
         <select id="language-select">
@@ -181,6 +197,18 @@
     </div>
 </div>
 <div id="calendar"></div>
+
+<div id="statusIndicators">
+    <div class="status-indicator">
+        <div class="pending"></div> <span id="statusPending">Pendente</span>
+    </div>
+    <div class="status-indicator">
+        <div class="running"></div> <span id="statusRunning">Em execução</span>
+    </div>
+    <div class="status-indicator">
+        <div class="expired"></div> <span id="statusExpired">Expirada</span>
+    </div>
+</div>
 
 <div class="maintenance-details">
     <div class="maintenance-details-content">
@@ -246,7 +274,6 @@
         document.getElementById('statusPending').innerText = translations[locale].statusPending;
         document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
         document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
-        document.getElementById('mainTitle').innerText = translations[locale].mainTitle;
         document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
         document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
     }
@@ -384,6 +411,32 @@
             $('#infoContent').html(infoContent);
             $('.maintenance-details').css('right', '0');
         }
+    }
+
+    function exportCSV() {
+        var locale = document.getElementById('language-select').value;
+        var maintenanceData = <?php echo json_encode($data['maintenances']); ?>;
+        var csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += `${translations[locale].title},${translations[locale].start},${translations[locale].end},${translations[locale].hosts},${translations[locale].description},${translations[locale].dataCollection},${translations[locale].status}\n`;
+
+        maintenanceData.forEach(function(maintenance) {
+            var startDate = moment.unix(maintenance.start_date);
+            var endDate = startDate.clone().add(maintenance.period, 'seconds');
+            var title = `${maintenance.name || 'No name'} (${startDate.format(translations[locale].dateFormat)} - ${endDate.format(translations[locale].dateFormat)})`;
+            var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
+            var description = maintenance.description || '';
+            var hosts = maintenance.hosts || '';
+            var { status } = determineEventColor(startDate, endDate);
+            csvContent += `${title},${startDate.format(translations[locale].dateFormat)},${endDate.format(translations[locale].dateFormat)},${hosts},${description},${coletandoDados},${status}\n`;
+        });
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "maintenance_schedule.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     document.addEventListener('DOMContentLoaded', function() {
