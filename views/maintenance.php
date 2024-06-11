@@ -357,7 +357,8 @@
             "hostChartTitle": "Maintenance by Hosts",
             "dateFormat": "MMMM Do YYYY, h:mm:ss a",
             "hostTableTitle": "Maintenance by Host",
-            "hostTableColumns": ["Host Name", "Total Maintenance", "Expired Maintenance", "Ongoing Maintenance", "Pending Maintenance"]
+	    "hostTableColumns": ["Host Name", "Total Maintenance", "Expired Maintenance", "Ongoing Maintenance", "Pending Maintenance"],
+	    "reportButtonText": "Report"
         },
         "pt-br": {
             "statusPending": "Pendente",
@@ -379,18 +380,20 @@
             "hostChartTitle": "Manutenções por Hosts",
             "dateFormat": "DD/MM/YYYY, HH:mm:ss",
             "hostTableTitle": "Manutenção por Host",
-            "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"]
+	    "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"],
+	    "reportButtonText": "Relatório"
         }
     };
 
-    function applyTranslations(locale) {
-        document.getElementById('statusPending').innerText = translations[locale].statusPending;
-        document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
-        document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
-        document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
-        document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
-        document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
-    }
+function applyTranslations(locale) {
+    document.getElementById('statusPending').innerText = translations[locale].statusPending;
+    document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
+    document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
+    document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
+    document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
+    document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
+    document.querySelector('.report-button').innerText = translations[locale].reportButtonText;  // Adicionado
+}
 
     function determineEventColor(startDate, endDate) {
         const now = moment();
