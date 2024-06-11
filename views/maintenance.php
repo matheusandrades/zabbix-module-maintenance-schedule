@@ -191,8 +191,8 @@
     <div class="language-selector">
         <label for="language-select" id="languageLabel">Select Language:</label>
         <select id="language-select">
+	    <option value="pt-br">Português</option>
             <option value="en">English</option>
-            <option value="pt-br">Português</option>
         </select>
     </div>
 </div>
