@@ -59,3 +59,4 @@ class MaintenanceCalendar extends CController {
         return $maintenances;
     }
 }
+?>
