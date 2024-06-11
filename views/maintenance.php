@@ -344,7 +344,7 @@
             "mainTitle": "Maintenance Calendar",
             "languageLabel": "Select Language:",
             "popupMessage": "There is ongoing maintenance!",
-            "maintenanceTitle": "Maintenance in Progress",
+            "maintenanceTitle": "Maintenance",
             "title": "Title",
             "start": "Start",
             "end": "End",
@@ -367,7 +367,7 @@
             "mainTitle": "Calendário de Manutenção",
             "languageLabel": "Selecionar idioma:",
             "popupMessage": "Há uma manutenção em andamento!",
-            "maintenanceTitle": "Manutenção em Andamento",
+            "maintenanceTitle": "Manutenção",
             "title": "Título",
             "start": "Início",
             "end": "Fim",
@@ -486,23 +486,25 @@ function applyTranslations(locale) {
 
 
     function openDetails(event) {
-        var locale = document.getElementById('language-select').value;
-        var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
-        var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
-        $('#infoContent').html(`
-            <div class="maintenance-info">
-                <p class="maintenance-title">${translations[locale].maintenanceTitle}</p>
-                <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-                <p><strong>${translations[locale].start}:</strong> ${start}</p>
-                <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
-                <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
-                <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
-                <p><strong>${translations[locale].status}:</strong> ${event.extendedProps.status}</p>
-            </div>
-        `);
-        $('.maintenance-details').css('right', '0');
-    }
+    var locale = document.getElementById('language-select').value;
+    var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
+    var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
+    var status = event.extendedProps.status;
+
+    $('#infoContent').html(`
+        <div class="maintenance-info">
+            <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
+            <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+            <p><strong>${translations[locale].start}:</strong> ${start}</p>
+            <p><strong>${translations[locale].end}:</strong> ${end}</p>
+            <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
+            <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
+            <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
+            <p><strong>${translations[locale].status}:</strong> ${status}</p>
+        </div>
+    `);
+    $('.maintenance-details').css('right', '0');
+}
 
     function closeDetails() {
         $('.maintenance-details').css('right', '-50%');
