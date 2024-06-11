@@ -32,18 +32,28 @@ class MaintenanceCalendar extends CController {
     private function getMaintenances(): array {
         $response = API::Maintenance()->get([
             'output' => ['maintenanceid', 'name', 'active_since', 'active_till', 'description'],
-            'selectTimeperiods' => ['timeperiod_type', 'period', 'start_date', 'end_date']
+            'selectTimeperiods' => ['timeperiod_type', 'period', 'start_date'],
+            'selectHosts' => ['hostid', 'name']
         ]);
 
         $maintenances = [];
         foreach ($response as $maintenance) {
-            $maintenances[] = [
-                'id' => $maintenance['maintenanceid'],
-                'name' => $maintenance['name'],
-                'start' => date('c', $maintenance['active_since']),
-                'end' => date('c', $maintenance['active_till']),
-                'description' => $maintenance['description']
-            ];
+            $hosts = array_map(function($host) {
+                return $host['name'];
+            }, $maintenance['hosts']);
+            
+            foreach ($maintenance['timeperiods'] as $timeperiod) {
+                $start_date = $timeperiod['start_date'];
+                $period = $timeperiod['period'];
+                $maintenances[] = [
+                    'id' => $maintenance['maintenanceid'],
+                    'name' => $maintenance['name'],
+                    'start_date' => $start_date,
+                    'period' => $period,
+                    'description' => $maintenance['description'],
+                    'hosts' => implode(', ', $hosts)
+                ];
+            }
         }
 
         return $maintenances;
