@@ -55,7 +55,7 @@
     }
 
     .maintenance-info {
-        background-color: #666;
+        background-color: #0a466a;
         color: #fff;
         padding: 20px;
         margin-bottom: 10px;
@@ -279,6 +279,11 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         background: #f9f9f9;
     }
+
+    .details-row {
+        display: none;
+        background-color: #f9f9f9;
+    }
 </style>
 
 <div id="calendarTitle">
@@ -357,8 +362,8 @@
             "hostChartTitle": "Maintenance by Hosts",
             "dateFormat": "MMMM Do YYYY, h:mm:ss a",
             "hostTableTitle": "Maintenance by Host",
-	    "hostTableColumns": ["Host Name", "Total Maintenance", "Expired Maintenance", "Ongoing Maintenance", "Pending Maintenance"],
-	    "reportButtonText": "Report"
+            "hostTableColumns": ["Host Name", "Total Maintenance", "Expired Maintenance", "Ongoing Maintenance", "Pending Maintenance"],
+            "reportButtonText": "Report"
         },
         "pt-br": {
             "statusPending": "Pendente",
@@ -380,20 +385,20 @@
             "hostChartTitle": "Manutenções por Hosts",
             "dateFormat": "DD/MM/YYYY, HH:mm:ss",
             "hostTableTitle": "Manutenção por Host",
-	    "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"],
-	    "reportButtonText": "Relatório"
+            "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"],
+            "reportButtonText": "Relatório"
         }
     };
 
-function applyTranslations(locale) {
-    document.getElementById('statusPending').innerText = translations[locale].statusPending;
-    document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
-    document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
-    document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
-    document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
-    document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
-    document.querySelector('.report-button').innerText = translations[locale].reportButtonText;  // Adicionado
-}
+    function applyTranslations(locale) {
+        document.getElementById('statusPending').innerText = translations[locale].statusPending;
+        document.getElementById('statusRunning').innerText = translations[locale].statusRunning;
+        document.getElementById('statusExpired').innerText = translations[locale].statusExpired;
+        document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
+        document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
+        document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
+        document.querySelector('.report-button').innerText = translations[locale].reportButtonText;  // Adicionado
+    }
 
     function determineEventColor(startDate, endDate) {
         const now = moment();
@@ -408,103 +413,102 @@ function applyTranslations(locale) {
     }
 
     function initializeCalendar(maintenanceData, locale) {
-    var events = [];
-    var ongoingMaintenanceCount = 0;
-    runningMaintenances = [];
+        var events = [];
+        var ongoingMaintenanceCount = 0;
+        runningMaintenances = [];
 
-    maintenanceData.forEach(function(maintenance) {
-        var startDate = moment.unix(maintenance.start_date);
-        var endDate = startDate.clone().add(maintenance.period, 'seconds');
-        var title = `${maintenance.name || 'No name'} (${startDate.format(translations[locale].dateFormat)} - ${endDate.format(translations[locale].dateFormat)})`;
-        var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
-        var description = maintenance.description || '';
-        var hosts = maintenance.hosts || '';
-        var { color, status, statusKey } = determineEventColor(startDate, endDate);
-        var event = {
-            title: title,
-            start: startDate.toISOString(),
-            end: endDate.toISOString(),
-            description: description,
-            maintenanceDescription: maintenance.description || '',
-            coletandoDados: coletandoDados,
-            hosts: Array.isArray(hosts) ? hosts : hosts.split(','),
-            backgroundColor: color,
-            borderColor: color,
-            status: status,
-            statusKey: statusKey
-        };
-        events.push(event);
+        maintenanceData.forEach(function(maintenance) {
+            var startDate = moment.unix(maintenance.start_date);
+            var endDate = startDate.clone().add(maintenance.period, 'seconds');
+            var title = `${maintenance.name || 'No name'} (${startDate.format(translations[locale].dateFormat)} - ${endDate.format(translations[locale].dateFormat)})`;
+            var coletandoDados = maintenance.maintenance_type === "0" ? 'Yes' : 'No';
+            var description = maintenance.description || '';
+            var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
+            var { color, status, statusKey } = determineEventColor(startDate, endDate);
+            var event = {
+                title: title,
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
+                description: description,
+                maintenanceDescription: maintenance.description || '',
+                coletandoDados: coletandoDados,
+                hosts: hosts,
+                backgroundColor: color,
+                borderColor: color,
+                status: status,
+                statusKey: statusKey
+            };
+            events.push(event);
 
-        if (statusKey === 'running') {
-            runningMaintenances.push(event);
-            ongoingMaintenanceCount++;
-        }
-    });
-
-    if (ongoingMaintenanceCount > 0) {
-        var popupMessage = `${translations[locale].popupMessage} (${ongoingMaintenanceCount})`;
-        var popupElement = document.getElementById('maintenancePopup');
-        document.getElementById('popupMessage').innerText = popupMessage;
-        popupElement.classList.add('show', 'blinking');
-    }
-
-    var calendarEl = document.getElementById('calendar');
-    if (calendar) {
-        calendar.destroy();
-    }
-    calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: locale,
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        },
-        events: events,
-        datesSet: function(info) {
-            fetchMaintenanceData().then(function(maintenanceData) {
-                updateCharts(info.start, info.end, maintenanceData);
-            });
-        },
-        eventClick: function(info) {
-            openDetails(info.event); 
-        },
-        eventDidMount: function(info) {
-            if (info.el.querySelector('.fc-list-event-title')) {
-                info.el.querySelector('.fc-list-event-title').style.backgroundColor = info.event.backgroundColor;
+            if (statusKey === 'running') {
+                runningMaintenances.push(event);
+                ongoingMaintenanceCount++;
             }
-            info.el.style.backgroundColor = info.event.backgroundColor;
-            info.el.style.borderColor = info.event.borderColor;
-        },
-        dayMaxEvents: true, 
-        height: '100%', 
-        expandRows: true 
-    });
+        });
 
-    calendar.render();
-}
+        if (ongoingMaintenanceCount > 0) {
+            var popupMessage = `${translations[locale].popupMessage} (${ongoingMaintenanceCount})`;
+            var popupElement = document.getElementById('maintenancePopup');
+            document.getElementById('popupMessage').innerText = popupMessage;
+            popupElement.classList.add('show', 'blinking');
+        }
 
+        var calendarEl = document.getElementById('calendar');
+        if (calendar) {
+            calendar.destroy();
+        }
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: locale,
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            },
+            events: events,
+            datesSet: function(info) {
+                fetchMaintenanceData().then(function(maintenanceData) {
+                    updateCharts(info.start, info.end, maintenanceData);
+                });
+            },
+            eventClick: function(info) {
+                openDetails(info.event); 
+            },
+            eventDidMount: function(info) {
+                if (info.el.querySelector('.fc-list-event-title')) {
+                    info.el.querySelector('.fc-list-event-title').style.backgroundColor = info.event.backgroundColor;
+                }
+                info.el.style.backgroundColor = info.event.backgroundColor;
+                info.el.style.borderColor = info.event.borderColor;
+            },
+            dayMaxEvents: true, 
+            height: '100%', 
+            expandRows: true 
+        });
+
+        calendar.render();
+    }
 
     function openDetails(event) {
-    var locale = document.getElementById('language-select').value;
-    var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
-    var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
-    var status = event.extendedProps.status;
+        var locale = document.getElementById('language-select').value;
+        var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
+        var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
+        var status = event.extendedProps.status;
 
-    $('#infoContent').html(`
-        <div class="maintenance-info">
-            <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
-            <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-            <p><strong>${translations[locale].start}:</strong> ${start}</p>
-            <p><strong>${translations[locale].end}:</strong> ${end}</p>
-            <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
-            <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
-            <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
-            <p><strong>${translations[locale].status}:</strong> ${status}</p>
-        </div>
-    `);
-    $('.maintenance-details').css('right', '0');
-}
+        $('#infoContent').html(`
+            <div class="maintenance-info">
+                <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
+                <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
+                <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
+                <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
+                <p><strong>${translations[locale].status}:</strong> ${status}</p>
+            </div>
+        `);
+        $('.maintenance-details').css('right', '0');
+    }
 
     function closeDetails() {
         $('.maintenance-details').css('right', '-50%');
@@ -577,61 +581,109 @@ function applyTranslations(locale) {
     }
 
     function renderMaintenanceTable(startDate = null, endDate = null) {
-    var maintenances = <?php echo json_encode($data['maintenances']); ?>;
-    var hostMaintenanceData = {};
+        var maintenances = <?php echo json_encode($data['maintenances']); ?>;
+        var hostMaintenanceData = {};
 
-    maintenances.forEach(function(maintenance) {
-        var start = moment.unix(maintenance.start_date);
-        var end = start.clone().add(maintenance.period, 'seconds');
+        maintenances.forEach(function(maintenance) {
+            var start = moment.unix(maintenance.start_date);
+            var end = start.clone().add(maintenance.period, 'seconds');
 
-        if (startDate && endDate && (start.isBefore(startDate) || end.isAfter(endDate))) {
-            return;
-        }
-
-        var status = determineEventColor(start, end).statusKey;
-
-        var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : maintenance.hosts.split(',');
-        hosts.forEach(function(host) {
-            if (!hostMaintenanceData[host]) {
-                hostMaintenanceData[host] = { total: 0, pending: 0, running: 0, expired: 0 };
+            if (startDate && endDate && (start.isBefore(startDate) || end.isAfter(endDate))) {
+                return;
             }
-            hostMaintenanceData[host].total++;
-            if (status === 'pending') {
-                hostMaintenanceData[host].pending++;
-            } else if (status === 'running') {
-                hostMaintenanceData[host].running++;
-            } else if (status === 'expired') {
-                hostMaintenanceData[host].expired++;
-            }
+
+            var status = determineEventColor(start, end).statusKey;
+
+            var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
+            hosts.forEach(function(host) {
+                if (!hostMaintenanceData[host]) {
+                    hostMaintenanceData[host] = { total: 0, pending: 0, running: 0, expired: 0 };
+                }
+                hostMaintenanceData[host].total++;
+                if (status === 'pending') {
+                    hostMaintenanceData[host].pending++;
+                } else if (status === 'running') {
+                    hostMaintenanceData[host].running++;
+                } else if (status === 'expired') {
+                    hostMaintenanceData[host].expired++;
+                }
+            });
         });
-    });
 
-    var locale = document.getElementById('language-select').value;
-    var tableHtml = `<table class="maintenance-table">
-        <thead>
-            <tr>
-                ${translations[locale].hostTableColumns.map(col => `<th>${col}</th>`).join('')}
-            </tr>
-        </thead>
-        <tbody>
-            ${Object.keys(hostMaintenanceData).map(host => `
+        var locale = document.getElementById('language-select').value;
+        var tableHtml = `<table class="maintenance-table">
+            <thead>
                 <tr>
-                    <td>${host}</td>
-                    <td>${hostMaintenanceData[host].total}</td>
-                    <td>${hostMaintenanceData[host].expired}</td>
-                    <td>${hostMaintenanceData[host].running}</td>
-                    <td>${hostMaintenanceData[host].pending}</td>
+                    ${translations[locale].hostTableColumns.map(col => `<th>${col}</th>`).join('')}
                 </tr>
-            `).join('')}
-        </tbody>
-    </table>`;
+            </thead>
+            <tbody>
+                ${Object.keys(hostMaintenanceData).map(host => `
+                    <tr class="host-row" data-host="${host}">
+                        <td>${host}</td>
+                        <td>${hostMaintenanceData[host].total}</td>
+                        <td>${hostMaintenanceData[host].expired}</td>
+                        <td>${hostMaintenanceData[host].running}</td>
+                        <td>${hostMaintenanceData[host].pending}</td>
+                    </tr>
+                    <tr class="details-row" id="details-${host}">
+                        <td colspan="5">
+                            <div class="details-content"></div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`;
 
-    document.getElementById('maintenanceTableContainer').innerHTML = tableHtml;
-}
+        document.getElementById('maintenanceTableContainer').innerHTML = tableHtml;
+        attachRowClickEvents();
+    }
 
+    function attachRowClickEvents() {
+        document.querySelectorAll('.host-row').forEach(function(row) {
+            row.addEventListener('click', function() {
+                var host = this.getAttribute('data-host');
+                var detailsRow = document.getElementById(`details-${host}`);
+                if (detailsRow.style.display === 'none' || !detailsRow.style.display) {
+                    showHostDetails(host, detailsRow.querySelector('.details-content'));
+                    detailsRow.style.display = 'table-row';
+                } else {
+                    detailsRow.style.display = 'none';
+                }
+            });
+        });
+    }
+
+    function showHostDetails(host, container) {
+        var maintenances = <?php echo json_encode($data['maintenances']); ?>;
+        var hostMaintenances = maintenances.filter(function(maintenance) {
+            var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
+            return hosts.includes(host);
+        });
+
+        var locale = document.getElementById('language-select').value;
+        var detailsHtml = hostMaintenances.map(function(maintenance) {
+            var startDate = moment.unix(maintenance.start_date).format(translations[locale].dateFormat);
+            var endDate = moment.unix(maintenance.start_date).add(maintenance.period, 'seconds').format(translations[locale].dateFormat);
+            var status = determineEventColor(moment.unix(maintenance.start_date), moment.unix(maintenance.start_date).add(maintenance.period, 'seconds')).status;
+
+            return `
+                <div class="maintenance-info">
+                    <p><strong>${translations[locale].title}:</strong> ${maintenance.name || 'No name'}</p>
+                    <p><strong>${translations[locale].start}:</strong> ${startDate}</p>
+                    <p><strong>${translations[locale].end}:</strong> ${endDate}</p>
+                    <p><strong>${translations[locale].hosts}:</strong> ${Array.isArray(maintenance.hosts) ? maintenance.hosts.join(', ') : maintenance.hosts}</p>
+                    <p><strong>${translations[locale].description}:</strong> ${maintenance.description || ''}</p>
+                    <p><strong>${translations[locale].dataCollection}:</strong> ${maintenance.maintenance_type === "0" ? 'Yes' : 'No'}</p>
+                    <p><strong>${translations[locale].status}:</strong> ${status}</p>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = detailsHtml;
+    }
 
     function updateCharts(startDate, endDate) {
-    renderMaintenanceTable(startDate, endDate);
-}
-
+        renderMaintenanceTable(startDate, endDate);
+    }
 </script>
