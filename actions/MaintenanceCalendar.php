@@ -21,7 +21,6 @@ class MaintenanceCalendar extends CController {
     }
 
     protected function doAction(): void {
-        // Lógica para obter os dados das manutenções agendadas via API do Zabbix
         $maintenanceData = $this->getMaintenances();
         
         $data = ['maintenances' => $maintenanceData];
@@ -60,4 +59,6 @@ class MaintenanceCalendar extends CController {
         return $maintenances;
     }
 }
+
 ?>
+
