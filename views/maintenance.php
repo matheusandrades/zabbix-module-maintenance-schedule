@@ -282,35 +282,37 @@
         display: none;
         background-color: #f9f9f9;
     }
- .delete-button {
-    background-color: #ff0000; /* Cor vermelha */
-    color: #ffffff; /* Texto branco */
-    border: none;
-    padding: 10;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 5px;
-}
 
-.delete-button:hover {
-    background-color: #cc0000; /* Cor mais escura ao passar o mouse */
-}
-.edit-button {
-    background-color: #007bff; /* Cor azul */
-    color: #ffffff; /* Texto branco */
-    border: none;
-    padding: 10px 20px;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 5px;
-    margin-left: 10px;
-}
+    .delete-button {
+        background-color: #ff0000; /* Cor vermelha */
+        color: #ffffff; /* Texto branco */
+        border: none;
+        padding: 10;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
 
-.edit-button:hover {
-    background-color: #0056b3; /* Cor mais escura ao passar o mouse */
-}
+    .delete-button:hover {
+        background-color: #cc0000; /* Cor mais escura ao passar o mouse */
+    }
 
+    .edit-button {
+        background-color: #007bff; /* Cor azul */
+        color: #ffffff; /* Texto branco */
+        border: none;
+                padding: 10px 20px;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-left: 10px;
+    }
+
+    .edit-button:hover {
+        background-color: #0056b3; /* Cor mais escura ao passar o mouse */
+    }
 </style>
+
 <div id="calendarTitle">
     <div class="language-selector">
         <label for="language-select" id="languageLabel">Select Language:</label>
@@ -342,8 +344,6 @@
     </div>
 </div>
 
-
-
 <div class="popup" id="maintenancePopup" onclick="showRunningMaintenances()">
     <span id="popupMessage">Há uma manutenção em andamento!</span>
     <span class="close-popup" onclick="closePopup()">&times;</span>
@@ -352,8 +352,7 @@
 <div class="report-modal" id="reportModal">
     <span class="close" onclick="closeReport()">&times;</span>
     <h2 id="reportTitle">Relatório de Manutenções</h2>
-    <div class="maintenance-table-container" id="maintenanceTableContainer">
-    </div>
+    <div class="maintenance-table-container" id="maintenanceTableContainer"></div>
 </div>
 
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
@@ -411,8 +410,7 @@
             "dateFormat": "DD/MM/YYYY, HH:mm:ss",
             "hostTableTitle": "Manutenção por Host",
             "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"],
-            "reportButtonText": "Relatório",
-            
+            "reportButtonText": "Relatório"
         }
     };
 
@@ -499,7 +497,7 @@
                 });
             },
             eventClick: function(info) {
-                openDetails(info.event); 
+                openDetails(info.event);
             },
             eventDidMount: function(info) {
                 if (info.el.querySelector('.fc-list-event-title')) {
@@ -508,176 +506,126 @@
                 info.el.style.backgroundColor = info.event.backgroundColor;
                 info.el.style.borderColor = info.event.borderColor;
             },
-            dayMaxEvents: true, 
-            height: '100%', 
-            expandRows: true 
+            dayMaxEvents: true,
+            height: '100%',
+            expandRows: true
         });
 
         calendar.render();
     }
 
     function openDetails(event) {
-    var locale = document.getElementById('language-select').value;
-    var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
-    var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
-    var status = event.extendedProps.status;
+        var locale = document.getElementById('language-select').value;
+        var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
+        var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
+        var status = event.extendedProps.status;
 
-    $('#infoContent').html(`
-        <div class="maintenance-info">
-            <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
-            <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-            <p><strong>${translations[locale].start}:</strong> ${start}</p>
-            <p><strong>${translations[locale].end}:</strong> ${end}</p>
-            <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
-            <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
-            <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>
-            <p><strong>${translations[locale].status}:</strong> ${status}</p>
-            <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
-                <input type="hidden" name="maintenanceid" value="${event.id}">
-                <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
-            </form>
-        </div>
-    `);
+        $('#infoContent').html(`
+            <div class="maintenance-info">
+                <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
+                <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
+                <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
+                <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>
+                <p><strong>${translations[locale].status}:</strong> ${status}</p>
+                <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
+                    <input type="hidden" name="maintenanceid" value="${event.id}">
+                    <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
+                </form>
+            </div>
+        `);
 
-    $('.maintenance-details').css('right', '0');
-}
-
-function confirmDeletion() {
-    return confirm("Você tem certeza que deseja deletar esta manutenção?");
-}
-
-function showRunningMaintenances() {
-    var locale = document.getElementById('language-select').value;
-    if (runningMaintenances.length > 0) {
-        var infoContent = runningMaintenances.map(function(event, index) {
-            var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
-            var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
-            return `
-                <div class="maintenance-info">
-                    <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
-                    <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-                    <p><strong>${translations[locale].start}:</strong> ${start}</p>
-                    <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                    <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
-                    <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
-                    <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>
-                    <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
-                    <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
-                        <input type="hidden" name="maintenanceid" value="${event.id}">
-                        <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
-                    </form>
-                    <button onclick="editMaintenance(${event.id}, '${event.title}', '${start}', '${end}', '${event.hosts.join(', ')}', '${event.maintenanceDescription}', '${event.coletandoDados}', '${event.status}')" id="editButton-${event.id}" class="edit-button">Editar</button>
-                </div>
-            `;
-        }).join('');
-        $('#infoContent').html(infoContent);
         $('.maintenance-details').css('right', '0');
     }
-}
 
-
-
-function showRunningMaintenances() {
-    var locale = document.getElementById('language-select').value;
-    if (runningMaintenances.length > 0) {
-        var infoContent = runningMaintenances.map(function(event, index) {
-            var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
-            var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
-            return `
-                <div class="maintenance-info">
-                    <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
-                    <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-                    <p><strong>${translations[locale].start}:</strong> ${start}</p>
-                    <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                    <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
-                    <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
-                    <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>
-                    <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
-                    <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
-                        <input type="hidden" name="maintenanceid" value="${event.id}">
-                        <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
-                    </form>
-                </div>
-            `;
-        }).join('');
-        $('#infoContent').html(infoContent);
-        $('.maintenance-details').css('right', '0');
+    function confirmDeletion() {
+        return confirm("Você tem certeza que deseja deletar esta manutenção?");
     }
-}
 
+    function closeDetails() {
+        $('.maintenance-details').css('right', '-50%');
+        $('#infoContent').html(''); // Limpa o conteúdo ao fechar
+    }
 
+    function showRunningMaintenances() {
+        var locale = document.getElementById('language-select').value;
+        if (runningMaintenances.length > 0) {
+            var infoContent = runningMaintenances.map(function(event, index) {
+                var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
+                var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
+                return `
+                    <div class="maintenance-info">
+                        <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
+                        <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                        <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                        <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                        <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
+                        <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
+                        <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>
+                        <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
+                        <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
+                            <input type="hidden" name="maintenanceid" value="${event.id}">
+                            <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
+                        </form>
+                    </div>
+                `;
+            }).join('');
+            $('#infoContent').html(infoContent);
+            $('.maintenance-details').css('right', '0');
+        }
+    }
 
-function convertDatesToUnix(event, id) {
-    event.preventDefault();
+    function convertDatesToUnix(event, id) {
+        event.preventDefault();
 
-    var form = document.getElementById('editForm');
-    var startDateField = document.getElementById(`start_date-${id}`);
-    var endDateField = document.getElementById(`end-${id}`);
+        var form = document.getElementById('editForm');
+        var startDateField = document.getElementById(`start_date-${id}`);
+        var endDateField = document.getElementById(`end-${id}`);
 
-    // Converta as datas para Unix timestamp
-    var startDateUnix = moment(startDateField.value).unix();
-    var endDateUnix = moment(endDateField.value).unix();
+        // Converta as datas para Unix timestamp
+        var startDateUnix = moment(startDateField.value).unix();
+        var endDateUnix = moment(endDateField.value).unix();
 
-    startDateField.value = startDateUnix;
-    endDateField.value = endDateUnix;
+        startDateField.value = startDateUnix;
+        endDateField.value = endDateUnix;
 
-    form.submit();
-}
-
-
-
-
-function convertDatesToUnix(event, id) {
-    event.preventDefault();
-
-    var form = document.getElementById('editForm');
-    var startDateField = document.getElementById(`start_date-${id}`);
-    var endDateField = document.getElementById(`end-${id}`);
-
-    // Converta as datas para Unix timestamp
-    var startDateUnix = moment(startDateField.value).unix();
-    var endDateUnix = moment(endDateField.value).unix();
-
-    startDateField.value = startDateUnix;
-    endDateField.value = endDateUnix;
-
-    form.submit();
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.delete-button').forEach(function(button) {
-        button.addEventListener('click', function(event) {
-            event.preventDefault();
-            var maintenanceId = this.querySelector('input[name="maintenanceid"]').value;
-            var confirmation = confirm('Você tem certeza de que deseja deletar esta manutenção?');
-
-            if (confirmation) {
-                fetch('zabbix.php?action=maintenance.deletes', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ maintenanceid: maintenanceId })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        alert('Manutenção deletada com sucesso.');
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Ocorreu um erro ao tentar deletar a manutenção.');
-                });
-            }
-        });
-    });
-});
+        form.submit();
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.delete-button').forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                var maintenanceId = this.querySelector('input[name="maintenanceid"]').value;
+                var confirmation = confirm('Você tem certeza de que deseja deletar esta manutenção?');
+
+                if (confirmation) {
+                    fetch('zabbix.php?action=maintenance.deletes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ maintenanceid: maintenanceId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            alert('Manutenção deletada com sucesso.');
+                            location.reload();
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        alert('Ocorreu um erro ao tentar deletar a manutenção.');
+                    });
+                }
+            });
+        });
+
         var languageSelect = document.getElementById('language-select');
         languageSelect.addEventListener('change', function() {
             var locale = languageSelect.value;
