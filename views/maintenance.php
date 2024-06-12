@@ -301,7 +301,7 @@
         background-color: #007bff; /* Cor azul */
         color: #ffffff; /* Texto branco */
         border: none;
-                padding: 10px 20px;
+        padding: 10px 20px;
         font-size: 14px;
         cursor: pointer;
         border-radius: 5px;
@@ -548,6 +548,11 @@
         $('.maintenance-details').css('right', '-50%');
         $('#infoContent').html(''); // Limpa o conteúdo ao fechar
     }
+    function closePopup() {
+    var popupElement = document.getElementById('maintenancePopup');
+    popupElement.classList.remove('show', 'blinking');
+}
+
 
     function showRunningMaintenances() {
         var locale = document.getElementById('language-select').value;
