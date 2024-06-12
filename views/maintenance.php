@@ -532,8 +532,7 @@
             <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
             <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>
             <p><strong>${translations[locale].status}:</strong> ${status}</p>
-            <div id="error-message" style="color: red; display: none;"></div>
-            <form id="deleteForm-${event.id}" onsubmit="deleteMaintenance(event, ${event.id})">
+            <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
                 <input type="hidden" name="maintenanceid" value="${event.id}">
                 <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
             </form>
@@ -543,35 +542,39 @@
     $('.maintenance-details').css('right', '0');
 }
 
-function deleteMaintenance(event, maintenanceId) {
-    event.preventDefault();
-    var confirmation = confirm('Você tem certeza de que deseja deletar esta manutenção?');
+function confirmDeletion() {
+    return confirm("Você tem certeza que deseja deletar esta manutenção?");
+}
 
-    if (confirmation) {
-        fetch('zabbix.php?action=maintenance.deletes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ maintenanceid: maintenanceId })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Manutenção deletada com sucesso.');
-                location.reload();
-            } else {
-                document.getElementById('error-message').innerText = data.message;
-                document.getElementById('error-message').style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            document.getElementById('error-message').innerText = 'Ocorreu um erro ao tentar deletar a manutenção.';
-            document.getElementById('error-message').style.display = 'block';
-        });
+function showRunningMaintenances() {
+    var locale = document.getElementById('language-select').value;
+    if (runningMaintenances.length > 0) {
+        var infoContent = runningMaintenances.map(function(event, index) {
+            var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
+            var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
+            return `
+                <div class="maintenance-info">
+                    <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
+                    <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                    <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                    <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                    <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
+                    <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
+                    <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>
+                    <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
+                    <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
+                        <input type="hidden" name="maintenanceid" value="${event.id}">
+                        <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
+                    </form>
+                    <button onclick="editMaintenance(${event.id}, '${event.title}', '${start}', '${end}', '${event.hosts.join(', ')}', '${event.maintenanceDescription}', '${event.coletandoDados}', '${event.status}')" id="editButton-${event.id}" class="edit-button">Editar</button>
+                </div>
+            `;
+        }).join('');
+        $('#infoContent').html(infoContent);
+        $('.maintenance-details').css('right', '0');
     }
 }
+
 
 
 function showRunningMaintenances() {
@@ -603,42 +606,6 @@ function showRunningMaintenances() {
 }
 
 
-
-function editMaintenance(id, title, start, end, hosts, description, dataCollection, status) {
-    var locale = document.getElementById('language-select').value;
-
-    $('#infoContent').html(`
-        <div class="maintenance-info">
-            <form id="editForm" method="post" action="zabbix.php?action=maintenance.update" onsubmit="convertDatesToUnix(event, '${id}')">
-                <input type="hidden" name="maintenance[maintenanceid]" value="${id}">
-                <label for="title-${id}">${translations[locale].title}:</label>
-                <input type="text" id="title-${id}" name="maintenance[title]" value="${title}">
-                
-                <label for="start_date-${id}">${translations[locale].start}:</label>
-                <input type="text" id="start_date-${id}" name="maintenance[start_date]" value="${start}">
-                
-                <label for="end-${id}">${translations[locale].end}:</label>
-                <input type="text" id="end-${id}" name="maintenance[end]" value="${end}">
-                
-                <label for="hosts-${id}">${translations[locale].hosts}:</label>
-                <input type="text" id="hosts-${id}" name="maintenance[hosts]" value="${hosts}">
-                
-                <label for="description-${id}">${translations[locale].description}:</label>
-                <input type="text" id="description-${id}" name="maintenance[description]" value="${description}">
-                
-                <label for="dataCollection-${id}">${translations[locale].dataCollection}:</label>
-                <input type="text" id="dataCollection-${id}" name="maintenance[dataCollection]" value="${dataCollection}">
-                
-                <label for="status-${id}">${translations[locale].status}:</label>
-                <input type="text" id="status-${id}" name="maintenance[status]" value="${status}">
-                
-                <button type="submit" class="edit-button">Salvar</button>
-            </form>
-        </div>
-    `);
-
-    $('.maintenance-details').css('right', '0');
-}
 
 function convertDatesToUnix(event, id) {
     event.preventDefault();
