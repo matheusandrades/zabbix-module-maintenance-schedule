@@ -186,7 +186,6 @@
         margin: 0 20px;
     }
 
-    /* Adicionando estilo para o botão de relatório */
     .report-button {
         margin-right: 20px;
         font-size: 12px;
@@ -198,7 +197,6 @@
         cursor: pointer;
     }
 
-    /* Estilo para a janela modal de relatório */
     .report-modal {
         display: none;
         position: fixed;
@@ -226,7 +224,7 @@
     }
 
     .report-modal h2 {
-        margin-bottom: 10px; /* Reduzir o espaçamento abaixo do título */
+        margin-bottom: 10px;
     }
 
     .maintenance-table-container {
@@ -284,8 +282,35 @@
         display: none;
         background-color: #f9f9f9;
     }
-</style>
+ .delete-button {
+    background-color: #ff0000; /* Cor vermelha */
+    color: #ffffff; /* Texto branco */
+    border: none;
+    padding: 10;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+}
 
+.delete-button:hover {
+    background-color: #cc0000; /* Cor mais escura ao passar o mouse */
+}
+.edit-button {
+    background-color: #007bff; /* Cor azul */
+    color: #ffffff; /* Texto branco */
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+.edit-button:hover {
+    background-color: #0056b3; /* Cor mais escura ao passar o mouse */
+}
+
+</style>
 <div id="calendarTitle">
     <div class="language-selector">
         <label for="language-select" id="languageLabel">Select Language:</label>
@@ -317,17 +342,17 @@
     </div>
 </div>
 
+
+
 <div class="popup" id="maintenancePopup" onclick="showRunningMaintenances()">
     <span id="popupMessage">Há uma manutenção em andamento!</span>
     <span class="close-popup" onclick="closePopup()">&times;</span>
 </div>
 
-<!-- Modal para o relatório -->
 <div class="report-modal" id="reportModal">
     <span class="close" onclick="closeReport()">&times;</span>
     <h2 id="reportTitle">Relatório de Manutenções</h2>
     <div class="maintenance-table-container" id="maintenanceTableContainer">
-        <!-- Tabela será inserida aqui -->
     </div>
 </div>
 
@@ -386,7 +411,8 @@
             "dateFormat": "DD/MM/YYYY, HH:mm:ss",
             "hostTableTitle": "Manutenção por Host",
             "hostTableColumns": ["Nome do Host", "Total de Manutenção", "Manutenção Expirada", "Manutenção em Andamento", "Manutenção Pendente"],
-            "reportButtonText": "Relatório"
+            "reportButtonText": "Relatório",
+            
         }
     };
 
@@ -397,7 +423,7 @@
         document.getElementById('languageLabel').innerText = translations[locale].languageLabel;
         document.getElementById('popupMessage').innerText = translations[locale].popupMessage;
         document.getElementById('reportTitle').innerText = translations[locale].reportTitle;
-        document.querySelector('.report-button').innerText = translations[locale].reportButtonText;  // Adicionado
+        document.querySelector('.report-button').innerText = translations[locale].reportButtonText;
     }
 
     function determineEventColor(startDate, endDate) {
@@ -426,6 +452,7 @@
             var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
             var { color, status, statusKey } = determineEventColor(startDate, endDate);
             var event = {
+                id: maintenance.id,  // Adicionando ID da manutenção
                 title: title,
                 start: startDate.toISOString(),
                 end: endDate.toISOString(),
@@ -490,58 +517,198 @@
     }
 
     function openDetails(event) {
-        var locale = document.getElementById('language-select').value;
-        var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
-        var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
-        var status = event.extendedProps.status;
+    var locale = document.getElementById('language-select').value;
+    var start = event.start ? moment(event.start).locale(locale).format(translations[locale].dateFormat) : '';
+    var end = event.end ? moment(event.end).locale(locale).format(translations[locale].dateFormat) : '';
+    var status = event.extendedProps.status;
 
-        $('#infoContent').html(`
-            <div class="maintenance-info">
-                <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
-                <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-                <p><strong>${translations[locale].start}:</strong> ${start}</p>
-                <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
-                <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
-                <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>  
-                <p><strong>${translations[locale].status}:</strong> ${status}</p>
-            </div>
-        `);
+    $('#infoContent').html(`
+        <div class="maintenance-info">
+            <p class="maintenance-title">${translations[locale].maintenanceTitle} - ${status}</p>
+            <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+            <p><strong>${translations[locale].start}:</strong> ${start}</p>
+            <p><strong>${translations[locale].end}:</strong> ${end}</p>
+            <p><strong>${translations[locale].hosts}:</strong> ${event.extendedProps.hosts.join(', ')}</p>
+            <p><strong>${translations[locale].description}:</strong> ${event.extendedProps.maintenanceDescription}</p>
+            <p><strong>${translations[locale].dataCollection}:</strong> ${event.extendedProps.coletandoDados}</p>
+            <p><strong>${translations[locale].status}:</strong> ${status}</p>
+            <div id="error-message" style="color: red; display: none;"></div>
+            <form id="deleteForm-${event.id}" onsubmit="deleteMaintenance(event, ${event.id})">
+                <input type="hidden" name="maintenanceid" value="${event.id}">
+                <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
+            </form>
+        </div>
+    `);
+
+    $('.maintenance-details').css('right', '0');
+}
+
+function deleteMaintenance(event, maintenanceId) {
+    event.preventDefault();
+    var confirmation = confirm('Você tem certeza de que deseja deletar esta manutenção?');
+
+    if (confirmation) {
+        fetch('zabbix.php?action=maintenance.deletes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ maintenanceid: maintenanceId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Manutenção deletada com sucesso.');
+                location.reload();
+            } else {
+                document.getElementById('error-message').innerText = data.message;
+                document.getElementById('error-message').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            document.getElementById('error-message').innerText = 'Ocorreu um erro ao tentar deletar a manutenção.';
+            document.getElementById('error-message').style.display = 'block';
+        });
+    }
+}
+
+
+function showRunningMaintenances() {
+    var locale = document.getElementById('language-select').value;
+    if (runningMaintenances.length > 0) {
+        var infoContent = runningMaintenances.map(function(event, index) {
+            var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
+            var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
+            return `
+                <div class="maintenance-info">
+                    <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
+                    <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
+                    <p><strong>${translations[locale].start}:</strong> ${start}</p>
+                    <p><strong>${translations[locale].end}:</strong> ${end}</p>
+                    <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
+                    <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
+                    <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>
+                    <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
+                    <form method="post" action="zabbix.php?action=maintenance.deletes" onsubmit="return confirmDeletion()">
+                        <input type="hidden" name="maintenanceid" value="${event.id}">
+                        <button type="submit" id="deleteButton-${event.id}" class="delete-button">Deletar</button>
+                    </form>
+                </div>
+            `;
+        }).join('');
+        $('#infoContent').html(infoContent);
         $('.maintenance-details').css('right', '0');
     }
+}
 
-    function closeDetails() {
-        $('.maintenance-details').css('right', '-50%');
-    }
 
-    function closePopup() {
-        var popupElement = document.getElementById('maintenancePopup');
-        popupElement.classList.remove('show', 'blinking');
-    }
 
-    function showRunningMaintenances() {
-        var locale = document.getElementById('language-select').value;
-        if (runningMaintenances.length > 0) {
-            var infoContent = runningMaintenances.map(function(event, index) {
-                var start = moment(event.start).locale(locale).format(translations[locale].dateFormat);
-                var end = moment(event.end).locale(locale).format(translations[locale].dateFormat);
-                return `
-                    <div class="maintenance-info">
-                        <p class="maintenance-title">${translations[locale].maintenanceTitle} ${index + 1}</p>
-                        <p><strong>${translations[locale].title}:</strong> ${event.title}</p>
-                        <p><strong>${translations[locale].start}:</strong> ${start}</p>
-                        <p><strong>${translations[locale].end}:</strong> ${end}</p>
-                        <p><strong>${translations[locale].hosts}:</strong> ${event.hosts.join(', ')}</p>
-                        <p><strong>${translations[locale].description}:</strong> ${event.maintenanceDescription}</p>
-                        <p><strong>${translations[locale].dataCollection}:</strong> ${event.coletandoDados}</p>  
-                        <p><strong>${translations[locale].status}:</strong> ${event.status}</p>
-                    </div>
-                `;
-            }).join('');
-            $('#infoContent').html(infoContent);
-            $('.maintenance-details').css('right', '0');
-        }
-    }
+function editMaintenance(id, title, start, end, hosts, description, dataCollection, status) {
+    var locale = document.getElementById('language-select').value;
+
+    $('#infoContent').html(`
+        <div class="maintenance-info">
+            <form id="editForm" method="post" action="zabbix.php?action=maintenance.update" onsubmit="convertDatesToUnix(event, '${id}')">
+                <input type="hidden" name="maintenance[maintenanceid]" value="${id}">
+                <label for="title-${id}">${translations[locale].title}:</label>
+                <input type="text" id="title-${id}" name="maintenance[title]" value="${title}">
+                
+                <label for="start_date-${id}">${translations[locale].start}:</label>
+                <input type="text" id="start_date-${id}" name="maintenance[start_date]" value="${start}">
+                
+                <label for="end-${id}">${translations[locale].end}:</label>
+                <input type="text" id="end-${id}" name="maintenance[end]" value="${end}">
+                
+                <label for="hosts-${id}">${translations[locale].hosts}:</label>
+                <input type="text" id="hosts-${id}" name="maintenance[hosts]" value="${hosts}">
+                
+                <label for="description-${id}">${translations[locale].description}:</label>
+                <input type="text" id="description-${id}" name="maintenance[description]" value="${description}">
+                
+                <label for="dataCollection-${id}">${translations[locale].dataCollection}:</label>
+                <input type="text" id="dataCollection-${id}" name="maintenance[dataCollection]" value="${dataCollection}">
+                
+                <label for="status-${id}">${translations[locale].status}:</label>
+                <input type="text" id="status-${id}" name="maintenance[status]" value="${status}">
+                
+                <button type="submit" class="edit-button">Salvar</button>
+            </form>
+        </div>
+    `);
+
+    $('.maintenance-details').css('right', '0');
+}
+
+function convertDatesToUnix(event, id) {
+    event.preventDefault();
+
+    var form = document.getElementById('editForm');
+    var startDateField = document.getElementById(`start_date-${id}`);
+    var endDateField = document.getElementById(`end-${id}`);
+
+    // Converta as datas para Unix timestamp
+    var startDateUnix = moment(startDateField.value).unix();
+    var endDateUnix = moment(endDateField.value).unix();
+
+    startDateField.value = startDateUnix;
+    endDateField.value = endDateUnix;
+
+    form.submit();
+}
+
+
+
+
+function convertDatesToUnix(event, id) {
+    event.preventDefault();
+
+    var form = document.getElementById('editForm');
+    var startDateField = document.getElementById(`start_date-${id}`);
+    var endDateField = document.getElementById(`end-${id}`);
+
+    // Converta as datas para Unix timestamp
+    var startDateUnix = moment(startDateField.value).unix();
+    var endDateUnix = moment(endDateField.value).unix();
+
+    startDateField.value = startDateUnix;
+    endDateField.value = endDateUnix;
+
+    form.submit();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.delete-button').forEach(function(button) {
+        button.addEventListener('click', function(event) {
+            event.preventDefault();
+            var maintenanceId = this.querySelector('input[name="maintenanceid"]').value;
+            var confirmation = confirm('Você tem certeza de que deseja deletar esta manutenção?');
+
+            if (confirmation) {
+                fetch('zabbix.php?action=maintenance.deletes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ maintenanceid: maintenanceId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Manutenção deletada com sucesso.');
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Ocorreu um erro ao tentar deletar a manutenção.');
+                });
+            }
+        });
+    });
+});
 
     document.addEventListener('DOMContentLoaded', function() {
         var languageSelect = document.getElementById('language-select');
@@ -565,7 +732,6 @@
     });
 
     function fetchMaintenanceData() {
-        // Função simulada para buscar dados de manutenção
         return new Promise(function(resolve, reject) {
             resolve(<?php echo json_encode($data['maintenances']); ?>);
         });
