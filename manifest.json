@@ -11,6 +11,12 @@
         "maintenance.calendar": {
             "class": "MaintenanceCalendar",
             "view": "maintenance"
+        },
+        "maintenance.deletes": {
+            "class": "MaintenanceDeleteAction"
+        },
+        "maintenance.updates": {
+            "class": "MaintenanceUpdateAction"
         }
     }
 }
