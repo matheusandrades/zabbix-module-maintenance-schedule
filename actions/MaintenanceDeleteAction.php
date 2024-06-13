@@ -37,7 +37,8 @@ class MaintenanceDeleteAction extends CController {
                 throw new \Exception('Falha ao deletar a manutenção ou Usuario sem permissão');
             }
 
-            $this->sendJsonResponse(['status' => 'success']);
+            header('Location: /zabbix.php?action=maintenance.calendar');
+            exit();
         } catch (\Exception $e) {
             $this->sendJsonResponse(['status' => 'error', 'message' => $e->getMessage()]);
         }
