@@ -681,19 +681,18 @@
             var status = determineEventColor(start, end).statusKey;
 
             var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
-            hosts.forEach(function(host) {
-                if (!hostMaintenanceData[host]) {
-                    hostMaintenanceData[host] = { total: 0, pending: 0, running: 0, expired: 0 };
-                }
-                hostMaintenanceData[host].total++;
-                if (status === 'pending') {
-                    hostMaintenanceData[host].pending++;
-                } else if (status === 'running') {
-                    hostMaintenanceData[host].running++;
-                } else if (status === 'expired') {
-                    hostMaintenanceData[host].expired++;
-                }
-            });
+            var key = hosts.join('|');
+            if (!hostMaintenanceData[key]) {
+                hostMaintenanceData[key] = { total: 0, pending: 0, running: 0, expired: 0 };
+            }
+            hostMaintenanceData[key].total++;
+            if (status === 'pending') {
+                hostMaintenanceData[key].pending++;
+            } else if (status === 'running') {
+                hostMaintenanceData[key].running++;
+            } else if (status === 'expired') {
+                hostMaintenanceData[key].expired++;
+            }
         });
 
         var locale = document.getElementById('language-select').value;
@@ -704,15 +703,15 @@
                 </tr>
             </thead>
             <tbody>
-                ${Object.keys(hostMaintenanceData).map(host => `
-                    <tr class="host-row" data-host="${host}">
-                        <td>${host}</td>
-                        <td>${hostMaintenanceData[host].total}</td>
-                        <td>${hostMaintenanceData[host].expired}</td>
-                        <td>${hostMaintenanceData[host].running}</td>
-                        <td>${hostMaintenanceData[host].pending}</td>
+                ${Object.keys(hostMaintenanceData).map(hosts => `
+                    <tr class="host-row" data-hosts="${hosts}">
+                        <td>${hosts.replace(/\|/g, ', ')}</td>
+                        <td>${hostMaintenanceData[hosts].total}</td>
+                        <td>${hostMaintenanceData[hosts].expired}</td>
+                        <td>${hostMaintenanceData[hosts].running}</td>
+                        <td>${hostMaintenanceData[hosts].pending}</td>
                     </tr>
-                    <tr class="details-row" id="details-${host}">
+                    <tr class="details-row" id="details-${hosts}">
                         <td colspan="5">
                             <div class="details-content"></div>
                         </td>
@@ -728,10 +727,10 @@
     function attachRowClickEvents() {
         document.querySelectorAll('.host-row').forEach(function(row) {
             row.addEventListener('click', function() {
-                var host = this.getAttribute('data-host');
-                var detailsRow = document.getElementById(`details-${host}`);
+                var hosts = this.getAttribute('data-hosts');
+                var detailsRow = document.getElementById(`details-${hosts}`);
                 if (detailsRow.style.display === 'none' || !detailsRow.style.display) {
-                    showHostDetails(host, detailsRow.querySelector('.details-content'));
+                    showHostDetails(hosts, detailsRow.querySelector('.details-content'));
                     detailsRow.style.display = 'table-row';
                 } else {
                     detailsRow.style.display = 'none';
@@ -740,11 +739,12 @@
         });
     }
 
-    function showHostDetails(host, container) {
+    function showHostDetails(hosts, container) {
         var maintenances = <?php echo json_encode($data['maintenances']); ?>;
+        var hostList = hosts.split('|');
         var hostMaintenances = maintenances.filter(function(maintenance) {
-            var hosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
-            return hosts.includes(host);
+            var maintenanceHosts = Array.isArray(maintenance.hosts) ? maintenance.hosts : (typeof maintenance.hosts === 'string' ? maintenance.hosts.split(',') : []);
+            return hostList.some(host => maintenanceHosts.includes(host));
         });
 
         var locale = document.getElementById('language-select').value;
