@@ -81,4 +81,3 @@ class MaintenanceUpdateAction extends CController {
 }
 
 ?>
-p
