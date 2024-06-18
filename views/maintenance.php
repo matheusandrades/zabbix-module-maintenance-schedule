@@ -319,6 +319,7 @@
         <select id="language-select">
             <option value="pt-br">Português</option>
             <option value="en">English</option>
+            <option value="nl">Dutch</option>
         </select>
     </div>
     <button class="report-button" onclick="showReport()">Relatório</button>
@@ -388,6 +389,29 @@
             "hostTableTitle": "Maintenance by Host",
             "hostTableColumns": ["Host Name", "Total Maintenance", "Expired Maintenance", "Ongoing Maintenance", "Pending Maintenance"],
             "reportButtonText": "Report"
+        },
+        "nl": {
+            "statusPending": "In afwachting",
+            "statusRunning": "Lopende",
+            "statusExpired": "Verlopen",
+            "mainTitle": "Onderhoudskalender",
+            "languageLabel": "Selecteer taal:",
+            "popupMessage": "Er vindt onderhoud plaats!",
+            "maintenanceTitle": "Onderhoud",
+            "title": "Naam",
+            "start": "Start",
+            "end": "Einde",
+            "hosts": "Hosts in onderhoud",
+            "description": "Omschrijving",
+            "dataCollection": "Gegevensverzameling",
+            "status": "Status",
+            "reportTitle": "Onderhouds rapport",
+            "statusChartTitle": "Onderhoud door status",
+            "hostChartTitle": "Onderhoud door hosts",
+            "dateFormat": "DD/MM/YYYY, HH:mm:ss",
+            "hostTableTitle": "Onderhoud door host",
+            "hostTableColumns": ["Host Name", "Totaal Onderhoud", "Verlopen Onderhoud", "Lopende Onderhoud", "In Afwachting van Onderhoud"],
+            "reportButtonText": "Rapport"
         },
         "pt-br": {
             "statusPending": "Pendente",
